@@ -10,9 +10,30 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(rtweet)
-TrumpTweets<- get_timeline("@realDonaldTrump", n=3200)
-SandersTweets<- get_timeline("@BernieSanders", n=3200)
+#Get Data from Tweeter
+#library(rtweet)
+#TrumpTweets<- get_timeline("@realDonaldTrump", n=3200)
+#SandersTweets<- get_timeline("@BernieSanders", n=3200)
+#save_as_csv(TrumpTweets, "TrumpTweets", prepend_ids = TRUE, na = "", fileEncoding = "UTF-8")
+#save_as_csv(SandersTweets, "SandersTweets", prepend_ids = TRUE, na = "", fileEncoding = "UTF-8") 
+```
 
+```{r}
+#load data files
+TrumpTweets <- read_csv("TrumpTweets.csv")
+SandersTweets <- read_csv("SandersTweets.csv")
+DJI <- read_excel("DJI.xlsx", col_types = c("date","numeric", "numeric", "numeric", "numeric","numeric", "numeric", "text"))
+```
+
+```{r}
+#Parse and clean up files
+DJI$Date <- as.Date(DJI$Date,format = "%m/%d/%y")
+combinedTweets <- rbind(SandersTweets,TrumpTweets)
+TweetData <- data.frame(combinedTweets$created_at,combinedTweets$screen_name,combinedTweets$text)
+names(TweetData) <- c("Date","name","text")
+TweetData$Date <- as.Date(TweetData$Date,format = "%m/%d/%y")
+CleanData <- merge(TweetData, DJI, by = "Date", all = TRUE)
+CleanData <- CleanData[is.na(CleanData$Open)==0,]
+head(CleanData)
 ```
 
