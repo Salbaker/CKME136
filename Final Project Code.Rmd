@@ -34,6 +34,101 @@ names(TweetData) <- c("Date","name","text")
 TweetData$Date <- as.Date(TweetData$Date,format = "%m/%d/%y")
 CleanData <- merge(TweetData, DJI, by = "Date", all = TRUE)
 CleanData <- CleanData[is.na(CleanData$Open)==0,]
+CleanData$text <- as.character(CleanData$text)
+CleanData$name <- as.character(CleanData$name)
 head(CleanData)
+```
+
+
+```{r}
+#load Libraries
+
+library(keras)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+
+#create training datasets
+training_id <- sample.int(nrow(CleanData), size = nrow(CleanData)*0.8)
+training <- CleanData[training_id,]
+testing <- CleanData[-training_id,]
+
+# Prepare the Data 
+
+num_words <- 10000
+max_length <- 50
+text_vectorization <- layer_text_vectorization(
+  max_tokens = num_words, 
+  output_sequence_length = max_length, 
+)
+
+text_vectorization %>% 
+  adapt(CleanData$text)
+  get_vocabulary(text_vectorization)
+  text_vectorization(matrix(CleanData$text[1], ncol = 1))
+```
+
+```{r}
+#The Data Model
+ input <- layer_input(shape = c(1), dtype = "string")
+
+output <- input %>% 
+  text_vectorization() %>% 
+  layer_embedding(input_dim = num_words + 1, output_dim = 16) %>%
+  layer_global_average_pooling_1d() %>%
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dropout(0.5) %>% 
+  layer_dense(units = 1, activation = "sigmoid")
+
+model <- keras_model(input, output)
+  
+  
+  
+  model %>% compile(
+  optimizer = 'adam',
+  loss = 'binary_crossentropy',
+  metrics = list('accuracy')
+)
+  
+```
+
+```{r}
+#train the model for Market moving up prediction
+  
+  history <- model %>% fit(
+    training$text,
+    as.numeric(training$Change == "Up"),
+    epochs = 100,
+    batch_size = 512,
+    validation_split = 0.2,
+    verbose=2
+)
+
+results <- model %>% evaluate(testing$text, as.numeric(testing$Change == "Up"), verbose = 0)
+results
+
+
+plot(history)
+
+```
+
+
+```{r}
+#train the model for Market moving down prediction
+  
+  history <- model %>% fit(
+    training$text,
+    as.numeric(training$Change == "Down"),
+    epochs = 100,
+    batch_size = 512,
+    validation_split = 0.2,
+    verbose=2
+)
+
+results <- model %>% evaluate(testing$text, as.numeric(testing$Change == "Down"), verbose = 0)
+results
+
+
+plot(history)
 ```
 
