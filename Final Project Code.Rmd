@@ -20,6 +20,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 #load data files
+library("readr")
+library("readxl")
 TrumpTweets <- read_csv("TrumpTweets.csv")
 SandersTweets <- read_csv("SandersTweets.csv")
 DJI <- read_excel("DJI.xlsx", col_types = c("date","numeric", "numeric", "numeric", "numeric","numeric", "numeric", "text"))
@@ -40,7 +42,7 @@ head(CleanData)
 ```
 
 
-```{r}
+```{r , results="hide"}
 #load Libraries
 
 library(keras)
